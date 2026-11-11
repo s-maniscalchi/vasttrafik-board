@@ -28,6 +28,7 @@ cd vasttrafik-board
 python3 -m venv venv
 source venv/bin/activate
 pip install flask requests python-dotenv
+```
 
 ### 2. Konfiguera API-nycklar
 Du behöver skapa ett konto på Västrafiks Utvecklarportal och skapa en app för att få dina API-nycklar.
@@ -37,7 +38,7 @@ Skapa en .env fil i huvudmappen och lägg in dina nycklar och önskad hållplats
 VT_KEY=din_client_id_här
 VT_SECRET=din_client_secret_här
 STOP_ID=9021014001960000 # Standard: Chalmers
-
+```
 ### 3. Starta Servern
 3.1 python3 app.py
 
