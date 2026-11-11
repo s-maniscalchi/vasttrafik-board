@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avgångar</title>
+    <style>
+        :root {
+            --bg: #090e1a;
+            --text-main: #ffffff;
+            --text-muted: #8b9bb4;
+            --border: #142035;
+            --row-bg: #0f182a;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .title-area h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .title-area p {
+            color: var(--text-muted);
+            margin: 0.2rem 0 0 0;
+            font-size: 0.9rem;
+        }
+
+        .brand {
+            color: #00A5E5; 
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .board {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .departure {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            background-color: var(--row-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            gap: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            min-width: 65px;
+            padding: 0.35rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 0px 1px 2px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Spårvagnarnas exakta färger från kartan */
+        .line-1 { background: #ffffff; color: #000000; text-shadow: none; border-color: #cccccc;}
+        .line-2 { background: #ffcc00; color: #000000; text-shadow: none; }
+        .line-3 { background: #0055a5; color: #ffffff; }
+        .line-4 { background: #009d4a; color: #ffffff; }
+        .line-5 { background: #ee1c25; color: #ffffff; }
+        .line-6 { background: #ff7c00; color: #000000; text-shadow: none; }
+        .line-7 { background: #874b26; color: #ffffff; }
+        .line-8 { background: #92278f; color: #ffffff; }
+        .line-9 { background: #00a9e0; color: #ffffff; }
+        .line-10 { background: #b3d234; color: #000000; text-shadow: none; }
+        .line-11 { background: #000000; color: #ffffff; border-color: #555555;}
+        .line-13 { background: #f6d1a9; color: #000000; text-shadow: none; }
+
+        /* Västtrafiks allmänna fordonsfärger */
+        .bg-bus { 
+            background: linear-gradient(135deg, #005C9A, #003B66); 
+            color: white; 
+        } 
+        .bg-express { 
+            background: linear-gradient(135deg, #009B48, #007536); 
+            color: white; 
+        } 
+        .bg-train { 
+            background: linear-gradient(135deg, #FFDD00, #DCA000); 
+            color: #111111; 
+            text-shadow: none;
+        } 
+        .bg-default { 
+            background: #2c3e50; 
+            color: white; 
+        }
+
+        .destination-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .destination {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .subtext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
+        }
+
+        .time {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .error {
+            color: #e74c3c;
+            padding: 2rem;
+            text-align: center;
+            background: var(--row-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div class="title-area">
+            <h1>Avgångar</h1>
+            <p id="station-name">Hämtar hållplats...</p>
+        </div>
+        <div class="brand">SAMMI.SPÅR</div>
+    </div>
+    
+    <div class="board" id="board">
+        <div style="padding: 2rem; text-align: center; color: var(--text-muted);">Laddar avgångar...</div>
+    </div>
+
+    <script>
+        function getBadgeClass(line) {
+            const l = line.toLowerCase();
+            
+            // Kolla först om det är ett tåg eller X-buss
+            if (l.includes('tåg')) return 'bg-train';
+            if (l.startsWith('x')) return 'bg-express';
+            
+            // Kolla linjenummer
+            const num = parseInt(l);
+            if (!isNaN(num)) {
+                // Spårvagnar 1-13 (kopplar direkt till CSS-klassen)
+                if (num >= 1 && num <= 13 && num !== 12) {
+                    return 'line-' + num;
+                }
+                
+                // Allt annat (stombussar och vanliga bussar) blir Västtrafik-blå
+                return 'bg-bus';
+            }
+            
+            return 'bg-default';
+        }
+
+        async function fetchDepartures() {
+            try {
+                const response = await fetch('/api/departures');
+                const data = await response.json();
+                const board = document.getElementById('board');
+                
+                if (data.error) {
+                    board.innerHTML = `<div class="error">Kunde inte ansluta: ${data.error}</div>`;
+                    return;
+                }
+
+                if (data.results && data.results.length > 0) {
+                    document.getElementById('station-name').innerText = data.results[0].stopPoint.name || "Station";
+                } else {
+                    document.getElementById('station-name').innerText = "Inga avgångar just nu";
+                }
+
+                const results = data.results || [];
+                
+                board.innerHTML = results.map(dep => {
+                    const lineName = dep.serviceJourney.line.shortName || dep.serviceJourney.line.name || '-';
+                    const badgeClass = getBadgeClass(lineName);
+                    
+                    const now = new Date();
+                    const depTime = new Date(dep.estimatedTime || dep.plannedTime);
+                    const diffMs = depTime - now;
+                    const diffMin = Math.round(diffMs / 60000);
+                    
+                    let timeStr = `${diffMin} min`;
+                    if (diffMin <= 0) timeStr = "Nu";
+                    if (diffMin < 0) return ''; 
+
+                    let dest = dep.serviceJourney.direction || 'Okänd';
+                    let extra = '';
+                    if (dest.includes(',')) {
+                        const parts = dest.split(',');
+                        dest = parts[0];
+                        extra = parts[1].trim();
+                    }
+
+                    return `
+                        <div class="departure">
+                            <div class="badge ${badgeClass}">${lineName}</div>
+                            <div class="destination-box">
+                                <span class="destination">${dest}</span>
+                                ${extra ? `<span class="subtext">${extra}</span>` : ''}
+                            </div>
+                            <div class="time">${timeStr}</div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error("Nätverksfel:", error);
+            }
+        }
+
+        fetchDepartures();
+        setInterval(fetchDepartures, 15000); 
+    </script>
+</body>
+</html>
